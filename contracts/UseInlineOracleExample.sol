@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.8.20;
-
-import "@sight-oracle/contracts/Oracle/Types.sol";
-import "@sight-oracle/contracts/Oracle/Oracle.sol";
 import "@sight-oracle/contracts/Oracle/RequestBuilder.sol";
 import "@sight-oracle/contracts/Oracle/ResponseResolver.sol";
+import { oracleOpSepolia } from "@sight-oracle/contracts/Oracle/Oracle.sol";
+import { ORACLE_ADDR_OP_SEPOLIA } from "@sight-oracle/contracts/Oracle/constants/OracleAddresses.sol";
 
-contract Example {
-    // Use Sight Oracle's RequestBuilder and ResponseResolver to interact with Sight Oracle
+contract UseInlineOracleExample {
     using RequestBuilder for Request;
     using ResponseResolver for CapsulatedValue;
 
-    Oracle public oracle;
-    CapsulatedValue private _target;
+    CapsulatedValue public _target;
 
-    constructor(address oracle_) payable {
-        oracle = Oracle(payable(oracle_));
+    function checkOracleAddress() public pure returns (bool) {
+        return ORACLE_ADDR_OP_SEPOLIA == address(oracleOpSepolia);
+    }
+
+    function checkOracleVersion() public view returns (bool) {
+        // this call will revert in others network, because oracleOpSepolia is not deployed yet.
+        return keccak256(bytes("0.0.2-SNAPSHOT")) == keccak256(bytes(oracleOpSepolia.VERSION()));
     }
 
     function makeRequest() public payable {
+        // this call will revert in others network, because oracleOpSepolia is not deployed yet.
         // Initialize new FHE computation request of a single step.
         Request memory r = RequestBuilder.newRequest(
             msg.sender,
@@ -33,7 +36,7 @@ contract Example {
         r.rand();
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        oracleOpSepolia.send(r);
     }
 
     // only Oracle can call this
@@ -46,7 +49,7 @@ contract Example {
     }
 
     modifier onlyOracle() {
-        require(msg.sender == address(oracle), "Only Oracle Can Do This");
+        require(msg.sender == address(oracleOpSepolia), "Only Oracle Can Do This");
         _;
     }
 }
