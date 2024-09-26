@@ -29,6 +29,8 @@ contract MultiStepExample {
             ""
         );
 
+        r.rand();
+
         // Send the request via Sight FHE Oracle
         oracle.send(r);
     }

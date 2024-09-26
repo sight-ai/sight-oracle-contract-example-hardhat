@@ -45,6 +45,10 @@ contract Example {
         _target = result;
     }
 
+    function getTarget() public view returns (CapsulatedValue memory) {
+        return _target;
+    }
+
     modifier onlyOracle() {
         require(msg.sender == address(oracle), "Only Oracle Can Do This");
         _;

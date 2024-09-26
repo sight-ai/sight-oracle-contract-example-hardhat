@@ -13,7 +13,7 @@ contract DecryptExample {
     using ResponseResolver for CapsulatedValue;
 
     Oracle public oracle;
-    CapsulatedValue public result;
+    CapsulatedValue private _target;
 
     constructor(address oracle_) payable {
         oracle = Oracle(payable(oracle_));
@@ -42,7 +42,11 @@ contract DecryptExample {
     // only Oracle can call this
     function callback(bytes32 /** requestId **/, CapsulatedValue[] memory values) public onlyOracle {
         // Decode value from Oracle callback
-        result = values[values.length - 1];
+        _target = values[values.length - 1];
+    }
+
+    function getTarget() public view returns (CapsulatedValue memory) {
+        return _target;
     }
 
     modifier onlyOracle() {

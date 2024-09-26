@@ -1,0 +1,67 @@
+name: fhevm-demo
+
+services:
+  mysql-server:
+    image: docker.io/library/mysql:8.0.31
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USERNAME}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "mysql-server"]
+      interval: 15s
+      timeout: 30s
+      retries: 50
+      start_period: 15s
+  backend:
+    image: gcr.io/celtic-descent-398803/sight-oracle-backend:0.0.1-sepolia
+    env_file:
+      - ./.env
+    environment:
+      - ENV=${ENV}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_USERNAME=${MYSQL_USERNAME}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    volumes:
+      - ./.env:/usr/src/app/.env
+    depends_on:
+      mysql-server:
+        condition: service_healthy
+    ports:
+      - 3001:3001
+    # command: ["tail", "-f", "/dev/null"]
+  fhevm-node:
+    image: ghcr.io/zama-ai/ethermint-dev-node:v0.4.3-arrayeq
+    environment:
+      - PRIVATE_KEY_ORACLE_RELAYER=${PRIVATE_KEY_ORACLE_RELAYER}
+      - ORACLE_CONTRACT_PREDEPLOY_ADDRESS=${ORACLE_CONTRACT_PREDEPLOY_ADDRESS}
+    ports:
+      - 8545:8545
+  evm-node:
+    image: ghcr.io/foundry-rs/foundry:latest
+    env_file:
+      - .env
+    command:
+      [
+        'anvil --block-time 12 --port 18545 --host 0.0.0.0 --chain-id $${ORACLE_CHAIN_ID} --mnemonic
+        "$${ORACLE_CHAIN_MNEMONIC}" --state /anvil_data'
+      ]
+    volumes:
+      - anvil_data:/anvil_data
+    ports:
+      - 18545:18545
+
+volumes:
+  mysql_data:
+  anvil_data:
+
+networks:
+  fhevm-demo:
