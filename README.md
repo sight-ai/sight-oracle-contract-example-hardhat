@@ -6,11 +6,10 @@ contract, and a Hardhat Ignition module that deploys that contract.
 Try running some of the following tasks:
 
 ```shell
+cp -f .env{.example,}
 npm install
 
-cp -f .env{.example,}
-
-npm run fhevm:stop ;npm run fhevm:start
+npm run sight:stop ;npm run sight:start
 
 npx hardhat run scripts/Example.ts
 npx hardhat run scripts/MultiStepExample.ts

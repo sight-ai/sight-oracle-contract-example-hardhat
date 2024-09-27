@@ -33,9 +33,9 @@ const config: HardhatUserConfig = {
       }
     }
   },
-  defaultNetwork: "localEVM",
+  defaultNetwork: "localSightEVM",
   networks: {
-    localEVM: {
+    localSightEVM: {
       accounts: {
         count: 10,
         mnemonic,
@@ -44,7 +44,7 @@ const config: HardhatUserConfig = {
       chainId: +process.env.ORACLE_CHAIN_ID!,
       url: "http://localhost:18545" // process.env.ORACLE_CHAIN_RPC_URL! // if execute environment is compose's service
     },
-    localFHEVM: {
+    localSightFHEVM: {
       accounts: {
         count: 10,
         mnemonic,

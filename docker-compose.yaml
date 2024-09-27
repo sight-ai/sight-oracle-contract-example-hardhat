@@ -1,4 +1,4 @@
-name: fhevm-demo
+name: sight-demo
 
 services:
   mysql-server:
@@ -38,7 +38,7 @@ services:
     ports:
       - 3001:3001
     # command: ["tail", "-f", "/dev/null"]
-  fhevm-node:
+  sight-node:
     image: ghcr.io/zama-ai/ethermint-dev-node:v0.4.3-arrayeq
     environment:
       - PRIVATE_KEY_ORACLE_RELAYER=${PRIVATE_KEY_ORACLE_RELAYER}
@@ -64,4 +64,4 @@ volumes:
   anvil_data:
 
 networks:
-  fhevm-demo:
+  sight-demo:

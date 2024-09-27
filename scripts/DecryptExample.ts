@@ -1,11 +1,16 @@
 import hre from "hardhat";
 
+import DecryptExampleModule from "../ignition/modules/DecryptExample";
 import { explainCapsulatedValue, sleep } from "./utils";
 
 async function main() {
-  const DecryptExampleFactory = await hre.ethers.getContractFactory("DecryptExample");
-  const example = await DecryptExampleFactory.deploy(process.env.ORACLE_CONTRACT_ADDRESS!);
-  await example.waitForDeployment();
+  const { DecryptExample: example } = await hre.ignition.deploy(DecryptExampleModule, {
+    parameters: {
+      DecryptExample: {
+        oracleAddress: process.env.ORACLE_CONTRACT_ADDRESS!
+      }
+    }
+  });
   console.log(`Contract Deployed At: ${await example.getAddress()}`);
   let target: any;
   target = await example.getTarget();
