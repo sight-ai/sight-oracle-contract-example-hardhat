@@ -1,5 +1,6 @@
 import hre from "hardhat";
 
+import { Oracle } from "../typechain-types/@sight-oracle/contracts/Oracle/Oracle";
 import { explainCapsulatedValue, sleep } from "./utils";
 
 async function main() {
@@ -10,11 +11,18 @@ async function main() {
   let target: any;
   target = await example.getTarget();
   console.log(`target before makeRequest: `, explainCapsulatedValue(target));
+  const oracle = (await hre.ethers.getContractAt(
+    "@sight-oracle/contracts/Oracle/Oracle.sol:Oracle",
+    process.env.ORACLE_CONTRACT_ADDRESS!
+  )) as unknown as Oracle;
+  oracle.connect(hre.ethers.provider);
+
+  oracle.once(oracle.filters.RequestCallback, async (reqId, success, event) => {
+    target = await example.getTarget();
+    console.log(`target after Oracle make callback: `, explainCapsulatedValue(target));
+  });
   const txResp = await example.makeRequest();
   await txResp.wait(1);
-  await sleep(25e3);
-  target = await example.getTarget();
-  console.log(`target after Oracle make callback: `, explainCapsulatedValue(target));
 }
 
 main();

@@ -8,7 +8,6 @@ import { promisify } from "util";
 const exec = promisify(oldExec);
 
 task("task:accounts", "Prints the list of accounts", async (_taskArgs, hre) => {
-  console.log(process.env.MNEMONIC!);
   const accounts = await hre.ethers.getSigners();
 
   for (const account of accounts) {
