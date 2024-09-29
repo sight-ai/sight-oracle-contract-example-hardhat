@@ -19,10 +19,10 @@ npx hardhat task:launchFhevm --network localSightFHEVM
 
 # docker compose logs -f sight-node
 
-npx hardhat task:accounts | tail -n 10| head -n 2 | xargs -I {} docker compose exec -T sight-node faucet {}; \
-sleep 5; npx hardhat task:deploySightFHEVM --network localSightFHEVM;
+MNEMONIC=$(grep COMPUTE_PROXY_CHAIN_MNEMONIC .env | cut -d '"' -f 2) npx hardhat task:accounts | tail -n 10| head -n 2 | xargs -I {} docker compose exec -T sight-node faucet {}; \
+sleep 5; MNEMONIC=$(grep COMPUTE_PROXY_CHAIN_MNEMONIC .env | cut -d '"' -f 2) npx hardhat task:deploySightFHEVM --network localSightFHEVM;
 
-npx hardhat task:deploySightEVM --network localSightEVM;
+MNEMONIC=$(grep ORACLE_CHAIN_MNEMONIC .env | cut -d '"' -f 2) npx hardhat task:deploySightEVM --network localSightEVM;
 
 docker compose up -d backend
 
