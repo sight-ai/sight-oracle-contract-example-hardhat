@@ -20,7 +20,7 @@ services:
       retries: 50
       start_period: 15s
   backend:
-    image: gcr.io/celtic-descent-398803/sight-oracle-backend:0.0.1-sepolia
+    image: ghcr.io/sight-ai/sight-oracle-backend:0.0.1
     env_file:
       - ./.env
     environment:

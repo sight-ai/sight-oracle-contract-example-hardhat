@@ -12,6 +12,9 @@ contract DecryptExample {
     using RequestBuilder for Request;
     using ResponseResolver for CapsulatedValue;
 
+    event OracleCallback(bytes32 reqId);
+
+    bytes32 lastReqId;
     Oracle public oracle;
     CapsulatedValue private _target;
 
@@ -36,17 +39,22 @@ contract DecryptExample {
         r.decryptEuint64(e_result);
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        lastReqId = oracle.send(r);
     }
 
     // only Oracle can call this
-    function callback(bytes32 /** requestId **/, CapsulatedValue[] memory values) public onlyOracle {
+    function callback(bytes32 reqId, CapsulatedValue[] memory values) public onlyOracle {
         // Decode value from Oracle callback
         _target = values[values.length - 1];
+        emit OracleCallback(reqId);
     }
 
     function getTarget() public view returns (CapsulatedValue memory) {
         return _target;
+    }
+
+    function getLatestReqId() public view returns (bytes32) {
+        return lastReqId;
     }
 
     modifier onlyOracle() {

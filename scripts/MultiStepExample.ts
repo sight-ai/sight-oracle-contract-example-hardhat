@@ -1,6 +1,5 @@
 import hre from "hardhat";
 
-import { Oracle } from "../typechain-types/@sight-oracle/contracts/Oracle/Oracle";
 import { sleep } from "./utils";
 
 async function main() {
@@ -9,29 +8,35 @@ async function main() {
   await example.waitForDeployment();
   console.log(`Contract Deployed At: ${await example.getAddress()}`);
   let target: any;
+  let latestReqId: string;
   target = await example.getTarget();
   console.log(`target(euint64) before createRandomTarget: `, target, "(uninitialized)");
-  const oracle = (await hre.ethers.getContractAt(
-    "@sight-oracle/contracts/Oracle/Oracle.sol:Oracle",
-    process.env.ORACLE_CONTRACT_ADDRESS!
-  )) as unknown as Oracle;
-  oracle.connect(hre.ethers.provider);
 
-  oracle.once(oracle.filters.RequestCallback, async (reqId, success, event) => {
-    target = await example.getTarget();
-    console.log(`target(euint64) after Oracle make callback: `, target);
+  example.once(example.filters.OracleCallback, async (reqId, event) => {
+    if (latestReqId === reqId) {
+      target = await example.getTarget();
+      console.log(`target(euint64) after Oracle make callback: `, target);
+    } else {
+      console.error("NOT MATCHED reqId");
+    }
   });
   const txResp = await example.createRandomTarget();
   await txResp.wait(1);
+  latestReqId = await example.getLatestReqId();
   await sleep(25e3);
 
   console.log(`target(euint64) before makeComputation: `, target);
-  oracle.once(oracle.filters.RequestCallback, async (reqId, success, event) => {
-    target = await example.getTarget();
-    console.log(`target(euint64) after Oracle make callback: `, target);
+  example.once(example.filters.OracleCallback, async (reqId, event) => {
+    if (latestReqId === reqId) {
+      target = await example.getTarget();
+      console.log(`target(euint64) after Oracle make callback: `, target);
+    } else {
+      console.error("NOT MATCHED reqId");
+    }
   });
   const txResp1 = await example.makeComputation(100);
   await txResp1.wait(1);
+  latestReqId = await example.getLatestReqId();
 }
 
 main();
