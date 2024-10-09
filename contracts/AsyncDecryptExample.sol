@@ -19,7 +19,7 @@ contract AsyncDecryptExample {
         oracle = Oracle(payable(oracle_));
     }
 
-    function asyncDecryptRandomEuint64() public payable {
+    function asyncDecryptRandomEuint64() public payable returns (bytes32 _requestId) {
         // Initialize new FHE computation request of a single step.
         Request memory r = RequestBuilder.newRequest(
             msg.sender,
@@ -36,7 +36,7 @@ contract AsyncDecryptExample {
         r.decryptEuint64Async(e_result);
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        _requestId = oracle.send(r);
     }
 
     // only Oracle can call this

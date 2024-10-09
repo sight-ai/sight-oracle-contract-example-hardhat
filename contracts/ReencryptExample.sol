@@ -23,7 +23,7 @@ contract ReencryptExample {
         CapsulatedValue memory capsulatedValue,
         bytes32 publicKey,
         bytes calldata signature
-    ) public payable {
+    ) public payable returns (bytes32 _requestId) {
         // Initialize new FHE computation request of a single step.
         ReencryptRequest memory r = ReencryptRequestBuilder.newReencryptRequest(
             msg.sender,
@@ -35,7 +35,7 @@ contract ReencryptExample {
         );
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        _requestId = oracle.send(r);
     }
 
     // only Oracle can call this
