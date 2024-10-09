@@ -19,7 +19,7 @@ contract Example {
         oracle = Oracle(payable(oracle_));
     }
 
-    function makeRequest() public payable {
+    function makeRequest() public payable returns (bytes32 _requestId) {
         // Initialize new FHE computation request of a single step.
         Request memory r = RequestBuilder.newRequest(
             msg.sender,
@@ -33,7 +33,7 @@ contract Example {
         r.rand();
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        _requestId = oracle.send(r);
     }
 
     // only Oracle can call this

@@ -19,7 +19,7 @@ contract MultiStepExample {
         oracle = Oracle(payable(oracle_));
     }
 
-    function createRandomTarget() public payable {
+    function createRandomTarget() public payable returns (bytes32 _requestId) {
         // Initialize new FHE computation request of a single step.
         Request memory r = RequestBuilder.newRequest(
             msg.sender,
@@ -29,8 +29,11 @@ contract MultiStepExample {
             ""
         );
 
+        // Generate a random encrypted value and store in Sight Network
+        r.rand();
+
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        _requestId = oracle.send(r);
     }
 
     // only Oracle can call this
@@ -42,7 +45,7 @@ contract MultiStepExample {
         _target = result.asEuint64();
     }
 
-    function makeComputation(uint64 amount) public payable {
+    function makeComputation(uint64 amount) public payable returns (bytes32 _requestId) {
         // Initialize new FHE computation request of 2 steps.
         Request memory r = RequestBuilder.newRequest(
             msg.sender,
@@ -56,10 +59,10 @@ contract MultiStepExample {
         op e_target = r.getEuint64(_target);
 
         // Step 2 - Add _target with plaintext input and store in Sight Network
-        op e_target_sum = r.add(e_target, amount);
+        r.add(e_target, amount);
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        _requestId = oracle.send(r);
     }
 
     // only Oracle can call this
