@@ -17,5 +17,5 @@
     "target": "es2020"
   },
   "files": ["./hardhat.config.ts"],
-  "include": ["./test/**/*", "utils/fhe-instance.ts"]
+  "include": ["tasks/**/*", "deploy/**/*", "scripts/**/*"]
 }
