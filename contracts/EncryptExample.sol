@@ -19,7 +19,10 @@ contract EncryptExample {
         oracle = Oracle(payable(oracle_));
     }
 
-    function encryptEuint64(bytes calldata cyphertext, uint8 cyphertextType) public payable {
+    function encryptEuint64(
+        bytes calldata cyphertext,
+        uint8 cyphertextType
+    ) public payable returns (bytes32 _requestId) {
         // Initialize new FHE computation request of a single step.
         SaveCiphertextRequest memory r = SaveCiphertextRequestBuilder.newSaveCiphertextRequest(
             msg.sender,
@@ -30,7 +33,7 @@ contract EncryptExample {
         );
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        _requestId = oracle.send(r);
     }
 
     // only Oracle can call this

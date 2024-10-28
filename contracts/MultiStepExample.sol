@@ -12,6 +12,9 @@ contract MultiStepExample {
     using RequestBuilder for Request;
     using ResponseResolver for CapsulatedValue;
 
+    event OracleCallback(bytes32 indexed reqId);
+
+    bytes32 lastReqId;
     Oracle public oracle;
     euint64 private _target;
 
@@ -29,17 +32,20 @@ contract MultiStepExample {
             ""
         );
 
+        r.rand();
+
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        lastReqId = oracle.send(r);
     }
 
     // only Oracle can call this
-    function randomTargetCallback(bytes32 /** requestId **/, CapsulatedValue[] memory values) public onlyOracle {
+    function randomTargetCallback(bytes32 reqId, CapsulatedValue[] memory values) public onlyOracle {
         // Decode value from Oracle callback
         CapsulatedValue memory result = values[0];
 
         // Keep this encrypted target value
         _target = result.asEuint64();
+        emit OracleCallback(reqId);
     }
 
     function makeComputation(uint64 amount) public payable {
@@ -56,23 +62,29 @@ contract MultiStepExample {
         op e_target = r.getEuint64(_target);
 
         // Step 2 - Add _target with plaintext input and store in Sight Network
-        op e_target_sum = r.add(e_target, amount);
+        // op e_target_sum = r.add(e_target, amount);
+        r.add(e_target, amount);
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        lastReqId = oracle.send(r);
     }
 
     // only Oracle can call this
-    function computationCallback(bytes32 /** requestId **/, CapsulatedValue[] memory values) public onlyOracle {
+    function computationCallback(bytes32 reqId, CapsulatedValue[] memory values) public onlyOracle {
         // Decode value from Oracle callback
         CapsulatedValue memory result = values[values.length - 1];
 
         // Keep this encrypted target value
         _target = result.asEuint64();
+        emit OracleCallback(reqId);
     }
 
     function getTarget() public view returns (euint64) {
         return _target;
+    }
+
+    function getLatestReqId() public view returns (bytes32) {
+        return lastReqId;
     }
 
     modifier onlyOracle() {

@@ -12,6 +12,9 @@ contract Example {
     using RequestBuilder for Request;
     using ResponseResolver for CapsulatedValue;
 
+    event OracleCallback(bytes32 indexed reqId);
+
+    bytes32 lastReqId;
     Oracle public oracle;
     CapsulatedValue private _target;
 
@@ -33,16 +36,25 @@ contract Example {
         r.rand();
 
         // Send the request via Sight FHE Oracle
-        oracle.send(r);
+        lastReqId = oracle.send(r);
     }
 
     // only Oracle can call this
-    function callback(bytes32 /** requestId **/, CapsulatedValue[] memory values) public onlyOracle {
+    function callback(bytes32 reqId, CapsulatedValue[] memory values) public onlyOracle {
         // Decode value from Oracle callback
         CapsulatedValue memory result = values[0];
 
         // Keep this encrypted target value
         _target = result;
+        emit OracleCallback(reqId);
+    }
+
+    function getLatestReqId() public view returns (bytes32) {
+        return lastReqId;
+    }
+
+    function getTarget() public view returns (CapsulatedValue memory) {
+        return _target;
     }
 
     modifier onlyOracle() {

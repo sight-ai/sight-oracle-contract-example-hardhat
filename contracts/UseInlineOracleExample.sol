@@ -21,7 +21,7 @@ contract UseInlineOracleExample {
         return keccak256(bytes("0.0.2-SNAPSHOT")) == keccak256(bytes(oracleOpSepolia.VERSION()));
     }
 
-    function makeRequest() public payable {
+    function makeRequest() public payable returns (bytes32 _requestId) {
         // this call will revert in others network, because oracleOpSepolia is not deployed yet.
         // Initialize new FHE computation request of a single step.
         Request memory r = RequestBuilder.newRequest(
@@ -36,7 +36,7 @@ contract UseInlineOracleExample {
         r.rand();
 
         // Send the request via Sight FHE Oracle
-        oracleOpSepolia.send(r);
+        _requestId = oracleOpSepolia.send(r);
     }
 
     // only Oracle can call this
