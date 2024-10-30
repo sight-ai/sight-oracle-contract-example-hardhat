@@ -21,6 +21,7 @@ services:
       start_period: 15s
   backend:
     image: ghcr.io/sight-ai/sight-oracle-backend:0.0.3-SNAPSHOT
+    platform: linux/amd64
     # build:
     #   context: ../sight-oracle-service-poc
     #   dockerfile: Dockerfile.build
@@ -55,6 +56,7 @@ services:
       - 8545:8545
   evm-node:
     image: ghcr.io/foundry-rs/foundry:latest
+    platform: linux/amd64
     env_file:
       - ./.env
     command:
