@@ -4,6 +4,7 @@ import fs from "fs";
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types";
 import { promisify } from "util";
+import { updateEnvFile } from "./taskSightEVM";
 
 const exec = promisify(oldExec);
 
@@ -23,8 +24,7 @@ task(
     const deployComputeProxy = await hre.upgrades.deployProxy(ComputeProxy);
     await deployComputeProxy.waitForDeployment();
     console.log("ComputeProxyUpgradeable deployed to:", await deployComputeProxy.getAddress());
-    const cmd = `sed -i 's#COMPUTE_PROXY_CONTRACT_ADDRESS=\\(.*\\)#COMPUTE_PROXY_CONTRACT_ADDRESS=${await deployComputeProxy.getAddress()}#g' .env`;
-    const response = await exec(cmd);
+    updateEnvFile("COMPUTE_PROXY_CONTRACT_ADDRESS", await deployComputeProxy.getAddress());
     // console.log(cmd, response);
   }
 );
@@ -76,9 +76,7 @@ task("task:computePredeployAddress")
       from: deployerAddress,
       nonce: 0 // deployer is supposed to have nonce 0 when deploying OraclePredeploy
     });
-    const cmd = `sed -i 's#ORACLE_CONTRACT_PREDEPLOY_ADDRESS=\\(.*\\)#ORACLE_CONTRACT_PREDEPLOY_ADDRESS=${oraclePredeployAddressPrecomputed}#g' .env`;
-    const response = await exec(cmd);
-    // console.log(cmd, response);
+    updateEnvFile("ORACLE_CONTRACT_PREDEPLOY_ADDRESS", oraclePredeployAddressPrecomputed);
 
     const solidityTemplate = `// SPDX-License-Identifier: BSD-3-Clause-Clear
   

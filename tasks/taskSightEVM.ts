@@ -8,17 +8,55 @@ import path from "path";
 
 const exec = promisify(oldExec);
 
+/**
+ * Updates a specific key in the .env file with the provided value.
+ * If the key does not exist, it adds the key-value pair.
+ *
+ * @param key - The environment variable key to update.
+ * @param value - The value to set for the key.
+ */
+export const updateEnvFile = (key: string, value: string): void => {
+  const envPath = path.resolve(process.cwd(), '.env');
+
+  // Check if .env file exists
+  if (!fs.existsSync(envPath)) {
+    console.error(`.env file not found at path: ${envPath}`);
+    process.exit(1);
+  }
+
+  // Create a timestamped backup of the original .env file
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = path.resolve(process.cwd(), `.env.backup.${timestamp}`);
+  fs.copyFileSync(envPath, backupPath);
+  console.log(`Backup of .env created at ${backupPath}`);
+
+  // Parse the existing .env file
+  const envConfig = dotenv.parse(fs.readFileSync(envPath));
+
+  // Update the specified key with the new value
+  envConfig[key] = value;
+
+  // Convert the updated config back to string
+  const updatedEnv = Object.entries(envConfig)
+    .map(([envKey, envValue]) => `${envKey}=${envValue}`)
+    .join('\n');
+
+  // Write the updated config back to the .env file
+  fs.writeFileSync(envPath, updatedEnv);
+  console.log(`Successfully updated the ${key} field in .env.`);
+};
+
+
 task(
   "task:deploySightEVM",
   "Deploy Oracle Contract to EVM Chain.",
   async (_taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
     const Oracle = await hre.ethers.getContractFactory("@sight-oracle/contracts/Oracle/Oracle.sol:Oracle");
-    const deployOracle = await Oracle.deploy();
-    await deployOracle.waitForDeployment();
-    console.log("Oracle deployed to:", await deployOracle.getAddress());
-    const cmd = `sed -i 's#ORACLE_CONTRACT_ADDRESS=\\(.*\\)#ORACLE_CONTRACT_ADDRESS=${await deployOracle.getAddress()}#g' .env`;
-    const response = await exec(cmd);
-    // console.log(cmd, response);
+    const oracleContract = await Oracle.deploy();
+    await oracleContract.waitForDeployment();
+    const oracleAddress = await oracleContract.getAddress();
+    console.log("Oracle deployed to:", oracleAddress);
+    updateEnvFile("ORACLE_CONTRACT_ADDRESS", oracleAddress);
   }
 );
 
@@ -26,32 +64,18 @@ task(
   "task:randomMnemonic",
   "Generate a random Mnemonic as user's mnemonic.",
   async (taskArgs: {name: string}, hre) => {
-    const name = taskArgs.name;
-    const mnemonic = hre.ethers.Mnemonic.entropyToPhrase(hre.ethers.randomBytes(32));
-    console.log(`Generated a Random Mnemonic for the ${name} field.`);
+    try{
+      const name = taskArgs.name;
+      const mnemonic = hre.ethers.Mnemonic.entropyToPhrase(hre.ethers.randomBytes(32));
+      console.log(`Generated a Random Mnemonic for the ${name} field.`);
 
-    const envPath = path.resolve(process.cwd(), '.env');
-
-    // Check if .env file exists
-    if (!fs.existsSync(envPath)) {
-      console.error(`.env file not found at path: ${envPath}`);
+      // Update the .env file with the new mnemonic
+      updateEnvFile(name, `"${mnemonic}"`);
+      console.log(`Successfully updated the ${name} field in .env.`);
+    } catch (error) {
+      console.error(`Error in task:randomMnemonic - ${(error as Error).message}`);
       process.exit(1);
     }
-
-    // Parse the existing .env file
-    const envConfig = dotenv.parse(fs.readFileSync(envPath));
-
-    // Update the specified mnemonic field
-    envConfig[name] = `"${mnemonic}"`;
-
-    // Convert the updated config back to string
-    const updatedEnv = Object.entries(envConfig)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
-
-    // Write the updated config back to the .env file
-    fs.writeFileSync(envPath, updatedEnv);
-    console.log(`Successfully updated the ${name} field in .env.`);
   }
 ).addParam("name", "Which Mnemonic Field.", undefined, types.string);
 
