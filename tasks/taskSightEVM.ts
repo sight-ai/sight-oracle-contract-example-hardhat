@@ -1,9 +1,10 @@
 import { exec as oldExec } from "child_process";
 import dotenv from "dotenv";
 import fs from "fs";
-import { task } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import type { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types";
 import { promisify } from "util";
+import path from "path";
 
 const exec = promisify(oldExec);
 
@@ -24,15 +25,35 @@ task(
 task(
   "task:randomMnemonic",
   "Generate a random Mnemonic as user's mnemonic.",
-  async (taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
+  async (taskArgs: {name: string}, hre) => {
     const name = taskArgs.name;
     const mnemonic = hre.ethers.Mnemonic.entropyToPhrase(hre.ethers.randomBytes(32));
-    console.log(`Generated a Random Mnemonic to .env ${name} field.`);
-    const cmd = `sed -i 's#\\b${name}=\\(.*\\)#${name}="${mnemonic}"#g' .env`;
-    const response = await exec(cmd);
-    // console.log(cmd, response);
+    console.log(`Generated a Random Mnemonic for the ${name} field.`);
+
+    const envPath = path.resolve(process.cwd(), '.env');
+
+    // Check if .env file exists
+    if (!fs.existsSync(envPath)) {
+      console.error(`.env file not found at path: ${envPath}`);
+      process.exit(1);
+    }
+
+    // Parse the existing .env file
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+
+    // Update the specified mnemonic field
+    envConfig[name] = `"${mnemonic}"`;
+
+    // Convert the updated config back to string
+    const updatedEnv = Object.entries(envConfig)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+
+    // Write the updated config back to the .env file
+    fs.writeFileSync(envPath, updatedEnv);
+    console.log(`Successfully updated the ${name} field in .env.`);
   }
-).addParam("name", "which Mnemonic Field.");
+).addParam("name", "Which Mnemonic Field.", undefined, types.string);
 
 task(
   "task:fundMnemonicEVM",
