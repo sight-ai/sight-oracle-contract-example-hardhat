@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 import fs from "fs";
 import { task, types } from "hardhat/config";
 import type { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types";
-import { promisify } from "util";
 import path from "path";
+import { promisify } from "util";
 
 const exec = promisify(oldExec);
 
@@ -16,59 +16,68 @@ const exec = promisify(oldExec);
  * @param value - The value to set for the key.
  */
 export const updateEnvFile = (key: string, value: string): void => {
-  const envPath = path.resolve(process.cwd(), '.env');
-
+  const envPath = path.resolve(process.cwd(), ".env");
   // Check if .env file exists
   if (!fs.existsSync(envPath)) {
     console.error(`.env file not found at path: ${envPath}`);
     process.exit(1);
   }
-
   // Create a timestamped backup of the original .env file
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const backupPath = path.resolve(process.cwd(), `.env.backup.${timestamp}`);
   fs.copyFileSync(envPath, backupPath);
   console.log(`Backup of .env created at ${backupPath}`);
-
   // Parse the existing .env file
   const envConfig = dotenv.parse(fs.readFileSync(envPath));
-
   // Update the specified key with the new value
   envConfig[key] = value;
-
   // Convert the updated config back to string
   const updatedEnv = Object.entries(envConfig)
-    .map(([envKey, envValue]) => `${envKey}=${envValue}`)
-    .join('\n');
-
+    .map(([envKey, envValue]) => {
+      if (envValue.trim().includes(" ")) {
+        return `${envKey}="${envValue.trim()}"`;
+      } else {
+        return `${envKey}=${envValue}`;
+      }
+    })
+    .join("\n");
   // Write the updated config back to the .env file
   fs.writeFileSync(envPath, updatedEnv);
   console.log(`Successfully updated the ${key} field in .env.`);
 };
-
 
 task(
   "task:deploySightEVM",
   "Deploy Oracle Contract to EVM Chain.",
   async (_taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
     const Oracle = await hre.ethers.getContractFactory("@sight-oracle/contracts/Oracle/Oracle.sol:Oracle");
-    const oracleContract = await Oracle.deploy();
-    await oracleContract.waitForDeployment();
-    const oracleAddress = await oracleContract.getAddress();
+    const deployOracle = await Oracle.deploy();
+    await deployOracle.waitForDeployment();
+    const oracleAddress = await deployOracle.getAddress();
     console.log("Oracle deployed to:", oracleAddress);
     updateEnvFile("ORACLE_CONTRACT_ADDRESS", oracleAddress);
+    const envConfig = dotenv.parse(fs.readFileSync(".env"));
+    const callers_count = +envConfig["ORACLE_CHAIN_MNEMONIC_COUNT"];
+    const accounts = await hre.ethers.getSigners();
+    const accounts_addrs = accounts.slice(0, callers_count).map((account) => account.address);
+    const txResp = await deployOracle.addCallers(accounts_addrs);
+    const txRcpt = await txResp.wait();
+    if (txRcpt.status === 1) {
+      console.log(JSON.stringify(accounts_addrs), "are the Oracle's caller.");
+    } else {
+      console.log(JSON.stringify(accounts_addrs), "failed to be the Oracle's caller.");
+    }
   }
 );
 
 task(
   "task:randomMnemonic",
   "Generate a random Mnemonic as user's mnemonic.",
-  async (taskArgs: {name: string}, hre) => {
-    try{
+  async (taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
+    try {
       const name = taskArgs.name;
       const mnemonic = hre.ethers.Mnemonic.entropyToPhrase(hre.ethers.randomBytes(32));
       console.log(`Generated a Random Mnemonic for the ${name} field.`);
-
       // Update the .env file with the new mnemonic
       updateEnvFile(name, `"${mnemonic}"`);
       console.log(`Successfully updated the ${name} field in .env.`);
