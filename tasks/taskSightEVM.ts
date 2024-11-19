@@ -118,3 +118,51 @@ task(
 )
   .addParam("name", "which Mnemonic Field.")
   .addParam("index", "which account from Mnemonic.");
+
+task(
+  "task:fundTarget",
+  "Fund a target address",
+  async (taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
+    const targetAddress = taskArgs.target;
+    const envConfig = dotenv.parse(fs.readFileSync(".env"));
+    const from_mnemonic = hre.ethers.Mnemonic.fromPhrase(envConfig["ORACLE_CHAIN_MNEMONIC"]);
+    const from_wallet = hre.ethers.HDNodeWallet.fromMnemonic(from_mnemonic, `m/44'/60'/0'/0`).connect(
+      hre.ethers.provider
+    );
+    const from = from_wallet.deriveChild(0);
+
+    const targetBalanceBefore = await hre.ethers.provider.getBalance(targetAddress);
+    const fromBalanceBefore = await hre.ethers.provider.getBalance(from.address);
+
+    console.log("Before funding:");
+    console.log(
+      `${from.address}: ${hre.ethers.formatUnits(fromBalanceBefore, "ether")} ETHs.`
+    );
+    console.log(
+      `${targetAddress}: ${hre.ethers.formatUnits(targetBalanceBefore, "ether")} ETHs.`
+    );
+
+    if (targetAddress !== from.address) {
+      const txResp = await from.sendTransaction({
+        to: targetAddress,
+        value: hre.ethers.parseEther("10")
+      });
+      await txResp.wait(1);
+
+      console.log("After funding:");
+      const targetBalanceAfter = await hre.ethers.provider.getBalance(targetAddress);
+      const fromBalanceAfter = await hre.ethers.provider.getBalance(from.address);
+
+      console.log(
+        `${from.address}: ${hre.ethers.formatUnits(fromBalanceAfter, "ether")} ETHs.`
+      );
+      console.log(
+        `${targetAddress}: ${hre.ethers.formatUnits(targetBalanceAfter, "ether")} ETHs.`
+      );
+    } else {
+      console.log("Target address is the same as the sender address. Funding skipped.");
+    }
+  }
+)
+  .addParam("target", "The target address to fund");
+
