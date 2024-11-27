@@ -7,7 +7,7 @@ import "@sight-oracle/contracts/Oracle/Oracle.sol";
 import "@sight-oracle/contracts/Oracle/RequestBuilder.sol";
 import "@sight-oracle/contracts/Oracle/ResponseResolver.sol";
 
-contract DecryptExample {
+contract DecryptCapsulatedValueExample {
     // Use Sight Oracle's RequestBuilder and ResponseResolver to interact with Sight Oracle
     using RequestBuilder for Request;
     using ResponseResolver for CapsulatedValue;
@@ -17,13 +17,12 @@ contract DecryptExample {
     bytes32 latestReqId;
     Oracle public oracle;
     CapsulatedValue private _target;
-    CapsulatedValue public capsulatedValue;
 
     constructor(address oracle_) payable {
         oracle = Oracle(payable(oracle_));
     }
 
-    function decryptRandomEuint64() public payable {
+    function decryptCapsulatedValue(CapsulatedValue memory cv) public payable {
         // Initialize new FHE computation request of a single step.
         Request memory r = RequestBuilder.newRequest(
             msg.sender,
@@ -32,12 +31,28 @@ contract DecryptExample {
             this.callback.selector // specify the callback for Oracle
         );
 
-        // Generate a random encrypted value and store in Sight Network
-        op e_result = r.rand();
+        if (cv.valueType == Types.T_EBOOL) {
+            // encrypted value and store in Sight Network
+            op e_result = r.getEbool(cv.asEbool());
 
-        // Decrypt e_result
+            // Decrypt e_result
 
-        r.decryptEuint64(e_result);
+            r.decryptEbool(e_result);
+        } else if (cv.valueType == Types.T_EUINT64) {
+            // encrypted value and store in Sight Network
+            op e_result = r.getEuint64(cv.asEuint64());
+
+            // Decrypt e_result
+
+            r.decryptEuint64(e_result);
+        } else if (cv.valueType == Types.T_EADDRESS) {
+            // encrypted value and store in Sight Network
+            op e_result = r.getEaddress(cv.asEaddress());
+
+            // Decrypt e_result
+
+            r.decryptEaddress(e_result);
+        }
 
         // Send the request via Sight FHE Oracle
         latestReqId = oracle.send(r);
@@ -47,24 +62,7 @@ contract DecryptExample {
     function callback(bytes32 reqId, CapsulatedValue[] memory values) public onlyOracle {
         // Decode value from Oracle callback
         _target = values[values.length - 1];
-        capsulatedValue = values[0];
         emit OracleCallback(reqId);
-    }
-
-    function shareACL(address other, bool enable) public {
-        oracle.acl().allowCallbackAddr(other, enable);
-    }
-
-    function getACL() public view returns (address[] memory) {
-        return oracle.acl().allowedCallbackAddrs(address(this));
-    }
-
-    function shareEncryptedValue(address other, bool enable) public {
-        oracle.acl().setAccessibleEuint64(other, capsulatedValue.asEuint64(), enable);
-    }
-
-    function getEncryptedValueOwners() public view returns (address[] memory) {
-        return oracle.acl().getEuint64Owners(capsulatedValue.asEuint64());
     }
 
     function getTarget() public view returns (CapsulatedValue memory) {

@@ -51,10 +51,15 @@ task(
   "Deploy Oracle Contract to EVM Chain.",
   async (_taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
     const Oracle = await hre.ethers.getContractFactory("@sight-oracle/contracts/Oracle/Oracle.sol:Oracle");
+    const StorageACL = await hre.ethers.getContractFactory("@sight-oracle/contracts/Oracle/StorageACL.sol:StorageACL");
     const deployOracle = await Oracle.deploy();
     await deployOracle.waitForDeployment();
+    const deployStorageACL = await StorageACL.deploy();
+    await deployStorageACL.waitForDeployment();
     const oracleAddress = await deployOracle.getAddress();
     console.log("Oracle deployed to:", oracleAddress);
+    const storageACLAddress = await deployStorageACL.getAddress();
+    console.log("StorageACL deployed to:", storageACLAddress);
     updateEnvFile("ORACLE_CONTRACT_ADDRESS", oracleAddress);
     const envConfig = dotenv.parse(fs.readFileSync(".env"));
     const callers_count = +envConfig["ORACLE_CHAIN_MNEMONIC_COUNT"];
@@ -66,6 +71,22 @@ task(
       console.log(JSON.stringify(accounts_addrs), "are the Oracle's caller.");
     } else {
       console.log(JSON.stringify(accounts_addrs), "failed to be the Oracle's caller.");
+    }
+
+    const txResp1 = await deployStorageACL.transferOwnership(deployOracle.target);
+    const txRcpt1 = await txResp1.wait();
+    if (txRcpt1.status === 1) {
+      console.log(deployOracle.target, "is the Storage's owner.");
+    } else {
+      console.log(deployOracle.target, "failed to be the Storage's owner.");
+    }
+
+    const txResp2 = await deployOracle.setStorageACL(deployStorageACL.target);
+    const txRcpt2 = await txResp2.wait();
+    if (txRcpt2.status === 1) {
+      console.log(deployStorageACL.target, "is the Oracle's storage.");
+    } else {
+      console.log(deployStorageACL.target, "failed to be the Oracle's storage.");
     }
   }
 );
@@ -128,50 +149,36 @@ task(
   .addParam("name", "which Mnemonic Field.")
   .addParam("index", "which account from Mnemonic.");
 
-task(
-  "task:fundTarget",
-  "Fund a target address",
-  async (taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
-    const targetAddress = taskArgs.target;
-    const envConfig = dotenv.parse(fs.readFileSync(".env"));
-    const from_mnemonic = hre.ethers.Mnemonic.fromPhrase(envConfig["ORACLE_CHAIN_MNEMONIC"]);
-    const from_wallet = hre.ethers.HDNodeWallet.fromMnemonic(from_mnemonic, `m/44'/60'/0'/0`).connect(
-      hre.ethers.provider
-    );
-    const from = from_wallet.deriveChild(0);
+task("task:fundTarget", "Fund a target address", async (taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
+  const targetAddress = taskArgs.target;
+  const envConfig = dotenv.parse(fs.readFileSync(".env"));
+  const from_mnemonic = hre.ethers.Mnemonic.fromPhrase(envConfig["ORACLE_CHAIN_MNEMONIC"]);
+  const from_wallet = hre.ethers.HDNodeWallet.fromMnemonic(from_mnemonic, `m/44'/60'/0'/0`).connect(
+    hre.ethers.provider
+  );
+  const from = from_wallet.deriveChild(0);
 
-    const targetBalanceBefore = await hre.ethers.provider.getBalance(targetAddress);
-    const fromBalanceBefore = await hre.ethers.provider.getBalance(from.address);
+  const targetBalanceBefore = await hre.ethers.provider.getBalance(targetAddress);
+  const fromBalanceBefore = await hre.ethers.provider.getBalance(from.address);
 
-    console.log("Before funding:");
-    console.log(
-      `${from.address}: ${hre.ethers.formatUnits(fromBalanceBefore, "ether")} ETHs.`
-    );
-    console.log(
-      `${targetAddress}: ${hre.ethers.formatUnits(targetBalanceBefore, "ether")} ETHs.`
-    );
+  console.log("Before funding:");
+  console.log(`${from.address}: ${hre.ethers.formatUnits(fromBalanceBefore, "ether")} ETHs.`);
+  console.log(`${targetAddress}: ${hre.ethers.formatUnits(targetBalanceBefore, "ether")} ETHs.`);
 
-    if (targetAddress !== from.address) {
-      const txResp = await from.sendTransaction({
-        to: targetAddress,
-        value: hre.ethers.parseEther("10")
-      });
-      await txResp.wait(1);
+  if (targetAddress !== from.address) {
+    const txResp = await from.sendTransaction({
+      to: targetAddress,
+      value: hre.ethers.parseEther("10")
+    });
+    await txResp.wait(1);
 
-      console.log("After funding:");
-      const targetBalanceAfter = await hre.ethers.provider.getBalance(targetAddress);
-      const fromBalanceAfter = await hre.ethers.provider.getBalance(from.address);
+    console.log("After funding:");
+    const targetBalanceAfter = await hre.ethers.provider.getBalance(targetAddress);
+    const fromBalanceAfter = await hre.ethers.provider.getBalance(from.address);
 
-      console.log(
-        `${from.address}: ${hre.ethers.formatUnits(fromBalanceAfter, "ether")} ETHs.`
-      );
-      console.log(
-        `${targetAddress}: ${hre.ethers.formatUnits(targetBalanceAfter, "ether")} ETHs.`
-      );
-    } else {
-      console.log("Target address is the same as the sender address. Funding skipped.");
-    }
+    console.log(`${from.address}: ${hre.ethers.formatUnits(fromBalanceAfter, "ether")} ETHs.`);
+    console.log(`${targetAddress}: ${hre.ethers.formatUnits(targetBalanceAfter, "ether")} ETHs.`);
+  } else {
+    console.log("Target address is the same as the sender address. Funding skipped.");
   }
-)
-  .addParam("target", "The target address to fund");
-
+}).addParam("target", "The target address to fund");

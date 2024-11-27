@@ -198,5 +198,5 @@ task("task:checkTxReceipt")
   .addParam("hash", "the tx hash.")
   .setAction(async function (taskArgs, hre) {
     const txRcpt = await hre.ethers.provider.getTransactionReceipt(taskArgs.hash);
-    console.log(txRcpt);
+    console.log(txRcpt, txRcpt?.logs);
   });
