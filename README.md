@@ -19,9 +19,13 @@ npm run sight:stop ;npm run sight:start
 
 npx hardhat run --no-compile scripts/Example.ts
 npx hardhat run --no-compile scripts/MultiStepExample.ts
-npx hardhat run --no-compile scripts/DecryptExample.ts
 npx hardhat run --no-compile scripts/EncryptReencryptExample.ts
 npx hardhat run --no-compile scripts/AsyncDecryptExample.ts
+
+# ignition deploy
+npx hardhat run --no-compile scripts/DecryptExample.ts
+npx hardhat run --no-compile scripts/DecryptCapsulatedValueExample.ts
+npx hardhat run --no-compile scripts/ChangeEncryptedValueACL.ts
 
 # for i in {1..10}; do idx=${i} npx hardhat run --no-compile scripts/MultiStepExampleParallel.ts & done
 # for i in {1..10}; do idx=${i} npx hardhat run --no-compile scripts/AsyncDecryptExampleParallel.ts & done

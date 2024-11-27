@@ -21,7 +21,7 @@ services:
       start_period: 15s
   backend:
     platform: linux/amd64
-    image: ghcr.io/sight-ai/sight-oracle-backend:0.0.3-SNAPSHOT
+    image: ghcr.io/sight-ai/sight-oracle-backend:0.0.3-rc2
     # build:
     #   context: ../sight-oracle-service-poc-pr
     #   dockerfile: Dockerfile.build

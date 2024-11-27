@@ -10,6 +10,9 @@ async function main() {
       DecryptExample: {
         oracleAddress
       }
+    },
+    config: {
+      requiredConfirmations: 1
     }
   });
   console.log(`Contract Deployed At: ${await example.getAddress()}`);
@@ -22,6 +25,8 @@ async function main() {
     if (latestReqId === reqId) {
       target = await example.getTarget();
       console.log(`target after Oracle make callback: `, explainCapsulatedValue(target));
+      target = await example.capsulatedValue();
+      console.log(`capsulatedValue after Oracle make callback: `, explainCapsulatedValue(target));
     } else {
       console.error("NOT MATCHED reqId");
     }
