@@ -3,6 +3,9 @@
 This project demonstrates a basic Sight Oracle Development use case. It comes with an example contract, a test for that
 contract, and a Hardhat Ignition module that deploys that contract.
 
+This project depends on docker compose, make sure that you have installed [these](https://github.com/docker/compose)
+firstly.
+
 Try running some of the following tasks:
 
 ```shell
@@ -14,11 +17,14 @@ npm install
 
 npm run sight:stop ;npm run sight:start
 
-npx hardhat run scripts/Example.ts
-npx hardhat run scripts/MultiStepExample.ts
-npx hardhat run scripts/DecryptExample.ts
+npx hardhat run --no-compile scripts/Example.ts
+npx hardhat run --no-compile scripts/MultiStepExample.ts
+npx hardhat run --no-compile scripts/DecryptExample.ts
+npx hardhat run --no-compile scripts/EncryptReencryptExample.ts
+npx hardhat run --no-compile scripts/AsyncDecryptExample.ts
 
-for i in {1..50}; do idx=${i} npx hardhat run --no-compile scripts/MultiStepExampleParallel.ts & done
+# for i in {1..10}; do idx=${i} npx hardhat run --no-compile scripts/MultiStepExampleParallel.ts & done
+# for i in {1..10}; do idx=${i} npx hardhat run --no-compile scripts/AsyncDecryptExampleParallel.ts & done
 ```
 
 Change example contracts & example scripts to make yourself.

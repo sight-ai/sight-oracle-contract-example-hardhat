@@ -3,7 +3,9 @@ import dotenv from "dotenv";
 import fs from "fs";
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types";
+import os from "os";
 import { promisify } from "util";
+
 import { updateEnvFile } from "./taskSightEVM";
 
 const exec = promisify(oldExec);
@@ -18,20 +20,19 @@ task("task:accounts", "Prints the list of accounts", async (_taskArgs, hre) => {
 
 task(
   "task:deploySightFHEVM",
-  "Deploy Compute Proxy Contract to FHEVM Chain.",
+  "Deploy Compute Proxy Contract to SightFHEVM Chain.",
   async (_taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
     const ComputeProxy = await hre.ethers.getContractFactory("ComputeProxyUpgradeable");
     const deployComputeProxy = await hre.upgrades.deployProxy(ComputeProxy);
     await deployComputeProxy.waitForDeployment();
     console.log("ComputeProxyUpgradeable deployed to:", await deployComputeProxy.getAddress());
     updateEnvFile("COMPUTE_PROXY_CONTRACT_ADDRESS", await deployComputeProxy.getAddress());
-    // console.log(cmd, response);
   }
 );
 
 task(
   "task:upgradeComputeProxyToV2",
-  "upgrade Compute Proxy Contract in FHEVM Chain.",
+  "upgrade Compute Proxy Contract in SightFHEVM Chain.",
   async (_taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
     const ComputeProxy = await hre.ethers.getContractFactory("ComputeProxyUpgradeableV2");
     const deployComputeProxy = await hre.upgrades.upgradeProxy(
@@ -55,7 +56,7 @@ task("task:deployOracle")
     const envConfig = dotenv.parse(fs.readFileSync(".env"));
     if (oraclePredeployAddress !== envConfig.ORACLE_CONTRACT_PREDEPLOY_ADDRESS) {
       throw new Error(
-        `The nonce of the deployer account is not null. Please use another deployer private key or relaunch a clean instance of the fhEVM`
+        `The nonce of the deployer account is not null. Please use another deployer private key or relaunch a clean instance of the Sight`
       );
     }
     console.log("OraclePredeploy was deployed at address: ", oraclePredeployAddress);
@@ -78,7 +79,7 @@ task("task:computePredeployAddress")
     });
     updateEnvFile("ORACLE_CONTRACT_PREDEPLOY_ADDRESS", oraclePredeployAddressPrecomputed);
 
-    const solidityTemplate = `// SPDX-License-Identifier: BSD-3-Clause-Clear
+    const solidityTemplate = `// SPDX-License-Identifier: MIT
   
   pragma solidity ^0.8.20;
   
@@ -86,13 +87,22 @@ task("task:computePredeployAddress")
           `;
 
     try {
-      fs.writeFileSync("./node_modules/fhevm/oracle/lib/PredeployAddress.sol", solidityTemplate, {
-        encoding: "utf8",
-        flag: "w"
-      });
-      console.log("node_modules/fhevm/oracle/lib/PredeployAddress.sol file has been generated successfully.");
+      fs.writeFileSync(
+        "./node_modules/@sight-oracle/internal-contracts/ComputeProxy/oracle/lib/PredeployAddress.sol",
+        solidityTemplate,
+        {
+          encoding: "utf8",
+          flag: "w"
+        }
+      );
+      console.log(
+        "node_modules/@sight-oracle/internal-contracts/ComputeProxy/oracle/lib/PredeployAddress.sol file has been generated successfully."
+      );
     } catch (error) {
-      console.error("Failed to write node_modules/fhevm/oracle/lib/PredeployAddress.sol", error);
+      console.error(
+        "Failed to write node_modules/@sight-oracle/internal-contracts/ComputeProxy/oracle/lib/PredeployAddress.sol",
+        error
+      );
     }
   });
 
@@ -136,7 +146,7 @@ task("task:removeRelayer")
     }
   });
 
-task("task:launchFhevm").setAction(async function (taskArgs, hre) {
+task("task:launchSightFHEVM").setAction(async function (taskArgs, hre) {
   const privKeyDeployer = process.env.PRIVATE_KEY_ORACLE_DEPLOYER;
   const privKeyOwner = process.env.PRIVATE_KEY_ORACLE_OWNER;
   const privKeyRelayer = process.env.PRIVATE_KEY_ORACLE_RELAYER;
@@ -183,3 +193,10 @@ task("task:getBalances").setAction(async function (taskArgs, hre) {
     `relayerAddress`
   );
 });
+
+task("task:checkTxReceipt")
+  .addParam("hash", "the tx hash.")
+  .setAction(async function (taskArgs, hre) {
+    const txRcpt = await hre.ethers.provider.getTransactionReceipt(taskArgs.hash);
+    console.log(txRcpt);
+  });

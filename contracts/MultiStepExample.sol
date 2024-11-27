@@ -14,7 +14,7 @@ contract MultiStepExample {
 
     event OracleCallback(bytes32 indexed reqId);
 
-    bytes32 lastReqId;
+    bytes32 latestReqId;
     Oracle public oracle;
     euint64 private _target;
 
@@ -35,7 +35,7 @@ contract MultiStepExample {
         r.rand();
 
         // Send the request via Sight FHE Oracle
-        lastReqId = oracle.send(r);
+        latestReqId = oracle.send(r);
     }
 
     // only Oracle can call this
@@ -66,7 +66,7 @@ contract MultiStepExample {
         r.add(e_target, amount);
 
         // Send the request via Sight FHE Oracle
-        lastReqId = oracle.send(r);
+        latestReqId = oracle.send(r);
     }
 
     // only Oracle can call this
@@ -84,7 +84,7 @@ contract MultiStepExample {
     }
 
     function getLatestReqId() public view returns (bytes32) {
-        return lastReqId;
+        return latestReqId;
     }
 
     modifier onlyOracle() {

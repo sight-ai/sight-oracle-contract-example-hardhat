@@ -14,7 +14,7 @@ contract Example {
 
     event OracleCallback(bytes32 indexed reqId);
 
-    bytes32 lastReqId;
+    bytes32 latestReqId;
     Oracle public oracle;
     CapsulatedValue private _target;
 
@@ -36,7 +36,7 @@ contract Example {
         r.rand();
 
         // Send the request via Sight FHE Oracle
-        lastReqId = oracle.send(r);
+        latestReqId = oracle.send(r);
     }
 
     // only Oracle can call this
@@ -50,7 +50,7 @@ contract Example {
     }
 
     function getLatestReqId() public view returns (bytes32) {
-        return lastReqId;
+        return latestReqId;
     }
 
     function getTarget() public view returns (CapsulatedValue memory) {

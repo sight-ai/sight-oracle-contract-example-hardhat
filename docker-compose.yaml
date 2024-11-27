@@ -20,10 +20,10 @@ services:
       retries: 50
       start_period: 15s
   backend:
-    image: ghcr.io/sight-ai/sight-oracle-backend:0.0.3-SNAPSHOT
     platform: linux/amd64
+    image: ghcr.io/sight-ai/sight-oracle-backend:0.0.3-SNAPSHOT
     # build:
-    #   context: ../sight-oracle-service-poc
+    #   context: ../sight-oracle-service-poc-pr
     #   dockerfile: Dockerfile.build
     env_file:
       - ./.env
@@ -52,11 +52,13 @@ services:
     environment:
       - PRIVATE_KEY_ORACLE_RELAYER=${PRIVATE_KEY_ORACLE_RELAYER}
       - ORACLE_CONTRACT_PREDEPLOY_ADDRESS=${ORACLE_CONTRACT_PREDEPLOY_ADDRESS}
+    volumes:
+      - ./setup.sh:/config/setup.sh
     ports:
       - 8545:8545
   evm-node:
-    image: ghcr.io/foundry-rs/foundry:latest
     platform: linux/amd64
+    image: ghcr.io/foundry-rs/foundry:latest
     env_file:
       - ./.env
     command:
