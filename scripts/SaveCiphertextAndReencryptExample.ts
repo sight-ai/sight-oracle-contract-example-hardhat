@@ -48,8 +48,10 @@ async function main() {
     return;
   }
 
-  const EncryptReencryptExampleFactory = await hre.ethers.getContractFactory("EncryptReencryptExample");
-  const example = await EncryptReencryptExampleFactory.deploy(ORACLE_CONTRACT_ADDRESS);
+  const SaveCiphertextAndReencryptExampleFactory = await hre.ethers.getContractFactory(
+    "SaveCiphertextAndReencryptExample"
+  );
+  const example = await SaveCiphertextAndReencryptExampleFactory.deploy(ORACLE_CONTRACT_ADDRESS);
   await example.waitForDeployment();
   console.log(`Contract Deployed At: ${await example.getAddress()}`);
 
@@ -120,11 +122,16 @@ async function main() {
 
   // test uint64.
   {
-    let Uint64Value = question("save ciphertext(euint64) for 1234567890 ? Or ", {
+    let Uint64ValueStr = question("save ciphertext(euint64) for 1234567890 ? Or ", {
       defaultInput: "1234567890"
     });
-    console.log(`Encrypt Value: ${+Uint64Value}/${typeof +Uint64Value}`);
-    const ciphertextUint64 = sightInstance.encrypt64(+Uint64Value);
+    let Uint64ValueOriginal = BigInt(Uint64ValueStr);
+    let Uint64Value = Uint64ValueOriginal % 2n ** 64n;
+    let Uint64ValueDiv = Uint64ValueOriginal / 2n ** 64n;
+    console.log(
+      `Encrypt ${Uint64ValueDiv === 0n ? "Value" : `Mod(2**64) Value`}: ${Uint64Value}/${typeof Uint64Value}`
+    );
+    const ciphertextUint64 = sightInstance.encrypt64(Uint64Value);
     console.log(`ciphertextUint64/fhe-publicKey size:`, ciphertextUint64.length, publicKey!.length);
     let txRespUint64 = await example.saveCiphertext(ciphertextUint64, 129 /* , { gasLimit: 1e7 } */);
     let txRcptUint64 = await txRespUint64.wait(1);

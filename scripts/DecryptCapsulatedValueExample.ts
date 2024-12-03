@@ -1,8 +1,9 @@
+import { BytesLike } from "ethers";
 import hre from "hardhat";
 import { question } from "readline-sync";
 
 import DecryptCapsulatedValueExampleModule from "../ignition/modules/DecryptCapsulatedValueExample";
-import { explainCapsulatedValue } from "./utils";
+import { abiCoder, explainCapsulatedValue } from "./utils";
 
 async function main() {
   const oracleAddress = process.env.ORACLE_CONTRACT_ADDRESS!;
@@ -38,10 +39,10 @@ async function main() {
   });
   console.log(`Capsulated Value String: ${capsulatedValueStr}/${typeof capsulatedValueStr}`);
   let capsulatedValue = {
-    data: BigInt(capsulatedValueStr.split(",")[0]),
+    data: abiCoder.encode(["bytes32"], [capsulatedValueStr.split(",")[0]]),
     valueType: BigInt(capsulatedValueStr.split(",")[1])
   };
-  console.log(`CapsulatedValue: `, explainCapsulatedValue(Object.values(capsulatedValue) as [bigint, bigint]));
+  console.log(`CapsulatedValue: `, explainCapsulatedValue(Object.values(capsulatedValue) as [BytesLike, bigint]));
   const unsignedTx = await example["decryptCapsulatedValue"].populateTransaction(capsulatedValue);
   const txResp = await accounts[0].sendTransaction({ ...unsignedTx });
   await txResp.wait(1);

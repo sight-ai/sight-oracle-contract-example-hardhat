@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import "@sight-oracle/contracts/Oracle/Types.sol";
 import "@sight-oracle/contracts/Oracle/Oracle.sol";
 import "@sight-oracle/contracts/Oracle/RequestBuilder.sol";
-import "@sight-oracle/contracts/Oracle/ResponseResolver.sol";
+import "@sight-oracle/contracts/Oracle/CapsulatedValueResolver.sol";
 
 contract Example {
     // Use Sight Oracle's RequestBuilder and ResponseResolver to interact with Sight Oracle

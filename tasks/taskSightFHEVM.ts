@@ -23,7 +23,7 @@ task(
   "Deploy Compute Proxy Contract to SightFHEVM Chain.",
   async (_taskArgs: TaskArguments, hre: HardhatRuntimeEnvironment) => {
     const ComputeProxy = await hre.ethers.getContractFactory("ComputeProxyUpgradeable");
-    const deployComputeProxy = await hre.upgrades.deployProxy(ComputeProxy);
+    const deployComputeProxy = await hre.upgrades.deployProxy(ComputeProxy, ["test"]);
     await deployComputeProxy.waitForDeployment();
     console.log("ComputeProxyUpgradeable deployed to:", await deployComputeProxy.getAddress());
     updateEnvFile("COMPUTE_PROXY_CONTRACT_ADDRESS", await deployComputeProxy.getAddress());

@@ -31,7 +31,7 @@ async function main() {
     }
   });
   // await sleep(25e3);
-  while ((target = await example.getTarget()) == 0n) {
+  while (BigInt((target = await example.getTarget())) == 0n) {
     await sleep(5e3);
   }
 
