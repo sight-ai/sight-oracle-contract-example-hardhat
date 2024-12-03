@@ -4,12 +4,11 @@ pragma solidity ^0.8.20;
 
 import "@sight-oracle/contracts/Oracle/Types.sol";
 import "@sight-oracle/contracts/Oracle/Oracle.sol";
-import "@sight-oracle/contracts/Oracle/RequestBuilder.sol";
 import "@sight-oracle/contracts/Oracle/CapsulatedValueResolver.sol";
+import "@sight-oracle/contracts/Oracle/ReencryptRequestBuilder.sol";
+import "@sight-oracle/contracts/Oracle/SaveCiphertextRequestBuilder.sol";
 
-// Async ops might slower than sync ops, but a transaction can own multi async ops, and it is not easy to reach the block gas limit of the fhe compute chain.
-contract AsyncDecryptExample {
-    // Use Sight Oracle's RequestBuilder and ResponseResolver to interact with Sight Oracle
+contract SaveBytesAndSelectResultExample {
     using RequestBuilder for Request;
     using ResponseResolver for CapsulatedValue;
 
@@ -20,30 +19,27 @@ contract AsyncDecryptExample {
     CapsulatedValue public result;
     bytes32 public latestReqId;
 
-    constructor(address oracle_) payable {
-        oracle = Oracle(payable(oracle_));
+    constructor(address oracle_) {
+        oracle = Oracle(oracle_);
     }
 
-    function asyncDecryptRandomEuint64() public payable returns (bytes32) {
-        // Initialize new FHE computation request of multi-steps.
+    function makeRequest(bytes memory euint64Bytes) public returns (bytes32) {
+        // Initialize new FHE computation request of 2 steps.
         Request memory r = RequestBuilder.newRequest(
             msg.sender,
-            8,
+            7,
             address(this),
-            this.callback.selector // specify the callback for Oracle
+            this.callback.selector, // specify the callback for Oracle
+            ""
         );
 
-        // Generate a random encrypted value and store in Sight Network
-        op e_result0 = r.rand();
-        // Decrypt e_result0 in async way.
-        r.decryptEuint64Async(e_result0);
-
-        op e_result1 = r.rand();
-        r.decryptEuint64Async(e_result1);
-        op e_result2 = r.rand();
-        r.decryptEuint64Async(e_result2);
-        op e_result3 = r.add(e_result0, e_result2);
-        r.decryptEuint64Async(e_result3);
+        op e_uint64 = r.rand();
+        op e_uint64_1 = r.saveEuint64Bytes(euint64Bytes);
+        op e_bool = r.ge(e_uint64, e_uint64_1);
+        op e_uint64_max = r.select(e_bool, e_uint64, e_uint64_1);
+        r.decryptEbool(e_bool);
+        r.decryptEuint64(e_uint64);
+        r.decryptEuint64(e_uint64_max);
 
         // Send the request via Sight FHE Oracle
         latestReqId = oracle.send(r);
@@ -68,4 +64,7 @@ contract AsyncDecryptExample {
         require(msg.sender == address(oracle), "Only Oracle Can Do This");
         _;
     }
+
+    fallback() external payable {}
+    receive() external payable {}
 }

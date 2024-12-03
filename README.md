@@ -19,7 +19,8 @@ npm run sight:stop ;npm run sight:start
 
 npx hardhat run --no-compile scripts/Example.ts
 npx hardhat run --no-compile scripts/MultiStepExample.ts
-npx hardhat run --no-compile scripts/EncryptReencryptExample.ts
+npx hardhat run --no-compile scripts/SaveCiphertextAndReencryptExample.ts
+npx hardhat run --no-compile scripts/SaveBytesAndSelectResultExample.ts
 npx hardhat run --no-compile scripts/AsyncDecryptExample.ts
 
 # ignition deploy

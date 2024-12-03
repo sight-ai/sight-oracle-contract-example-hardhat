@@ -1,6 +1,7 @@
+import { BytesLike } from "ethers";
 import hre from "hardhat";
 
-import { explainCapsulatedValue } from "./utils";
+import { abiCoder, explainCapsulatedValue } from "./utils";
 
 async function main() {
   const AsyncDecryptExampleFactory = await hre.ethers.getContractFactory("AsyncDecryptExample");
@@ -17,7 +18,6 @@ async function main() {
     `results before asyncDecryptRandomEuint64: `,
     results.map((result) => explainCapsulatedValue(result))
   );
-
   example.once(example.filters.OracleCallback, async (reqId, event) => {
     if (latestReqId === reqId) {
       result = await example.result();
@@ -25,12 +25,16 @@ async function main() {
       console.log(`result after asyncDecryptRandomEuint64: `, explainCapsulatedValue(result));
       console.log(
         `results after asyncDecryptRandomEuint64: `,
-        results.map((result: [bigint, bigint]) => explainCapsulatedValue(result))
+        results.map((result: [BytesLike, bigint]) => explainCapsulatedValue(result))
       );
-      if ((results[1].data + results[5].data) % 2n ** 64n == results[7].data) {
-        console.log(`Result: ${results[1].data} + ${results[5].data} == ${results[7].data} + n*2**64, Is Correct.`);
+      let results_1 = abiCoder.decode(["uint64"], results[1].data)[0];
+      let results_5 = abiCoder.decode(["uint64"], results[5].data)[0];
+      let results_7 = abiCoder.decode(["uint64"], results[7].data)[0];
+      let sumMod = (results_1 + results_5) % 2n ** 64n;
+      if (sumMod == results_7) {
+        console.log(`Result: (${results_1} + ${results_5})'s Mod(2**64) Value ${sumMod} == ${results_7} Is Correct.`);
       } else {
-        console.error(`Result: ${results[1].data} + ${results[5].data} == ${results[7].data} + n*2**64, Not Matched`);
+        console.error(`Result: (${results_1} + ${results_5})'s Mod(2**64) Value ${sumMod} == ${results_7} Not Matched`);
       }
     } else {
       console.error("NOT MATCHED reqId");

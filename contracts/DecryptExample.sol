@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import "@sight-oracle/contracts/Oracle/Types.sol";
 import "@sight-oracle/contracts/Oracle/Oracle.sol";
 import "@sight-oracle/contracts/Oracle/RequestBuilder.sol";
-import "@sight-oracle/contracts/Oracle/ResponseResolver.sol";
+import "@sight-oracle/contracts/Oracle/CapsulatedValueResolver.sol";
 
 contract DecryptExample {
     // Use Sight Oracle's RequestBuilder and ResponseResolver to interact with Sight Oracle
@@ -60,15 +60,23 @@ contract DecryptExample {
     }
 
     function shareEncryptedValue(address other, bool enable) public {
-        oracle.acl().setAccessibleEuint64(other, capsulatedValue.asEuint64(), enable);
+        oracle.acl().setAccessible(other, capsulatedValue.asBytes32(), enable);
+    }
+
+    function shareEncryptedValue(address other, bytes32 key, bool enable) public {
+        oracle.acl().setAccessible(other, key, enable);
     }
 
     function getEncryptedValueOwners() public view returns (address[] memory) {
-        return oracle.acl().getEuint64Owners(capsulatedValue.asEuint64());
+        return oracle.acl().getValueOwners(capsulatedValue.asBytes32());
     }
 
     function getTarget() public view returns (CapsulatedValue memory) {
         return _target;
+    }
+
+    function getTargetBytes32() public view returns (bytes32) {
+        return _target.asBytes32();
     }
 
     function getLatestReqId() public view returns (bytes32) {

@@ -51,13 +51,13 @@ async function main() {
       target = await example.getTarget();
       console.log(`target after Oracle make callback: `, explainCapsulatedValue(target));
 
-      const txRcpt1 = await (await decryptExample.shareEncryptedValue(example.target, false)).wait();
-      console.log(
-        `Share DecryptExample capsulatedValue to ${example.target} as false: ${txRcpt1.status == 1 ? "success" : "failed"}`
-      );
-      console.log(
-        `DecryptExample's capsulatedValue owners: ${JSON.stringify(await decryptExample.getEncryptedValueOwners())}`
-      );
+      // const txRcpt1 = await (await decryptExample.shareEncryptedValue(example.target, false)).wait();
+      // console.log(
+      //   `Share DecryptExample capsulatedValue to ${example.target} as false: ${txRcpt1.status == 1 ? "success" : "failed"}`
+      // );
+      // console.log(
+      //   `DecryptExample's capsulatedValue owners: ${JSON.stringify(await decryptExample.getEncryptedValueOwners())}`
+      // );
     } else {
       console.error("NOT MATCHED reqId");
     }

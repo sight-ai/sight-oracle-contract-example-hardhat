@@ -4,12 +4,11 @@ pragma solidity ^0.8.20;
 
 import "@sight-oracle/contracts/Oracle/Types.sol";
 import "@sight-oracle/contracts/Oracle/Oracle.sol";
-import "@sight-oracle/contracts/Oracle/ResponseResolver.sol";
 import "@sight-oracle/contracts/Oracle/CapsulatedValueResolver.sol";
 import "@sight-oracle/contracts/Oracle/ReencryptRequestBuilder.sol";
 import "@sight-oracle/contracts/Oracle/SaveCiphertextRequestBuilder.sol";
 
-contract EncryptReencryptExample {
+contract SaveCiphertextAndReencryptExample {
     event SaveCiphertext(bytes32 reqId, CapsulatedValue cv);
     event ReencryptedCiphertext(bytes32 reqId, bytes reencryptedCiphertext);
 
