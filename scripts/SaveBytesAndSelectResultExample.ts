@@ -98,6 +98,33 @@ async function main() {
     } else {
       console.error("NOT MATCHED reqId");
     }
+    nextTest = true;
+  });
+
+  while (!nextTest) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  nextTest = false;
+
+  let txResp = await example.makeRequestWithReencrypt(token.publicKey, token.signature /* , { gasLimit: 1e7 } */);
+  let txRcpt = await txResp.wait(1);
+  console.log(`call makeRequestWithReencrypt:`, txRcpt?.hash, txRcpt?.status === 1 ? "success" : "failed");
+  latestReqId = await example.latestReqId();
+
+  await example.once(example.filters.OracleCallback, async (reqId, event) => {
+    if (latestReqId === reqId) {
+      result = await example.result();
+      results = await example.getResults();
+      console.log(`result after makeRequestWithReencrypt: `, explainCapsulatedValue(result));
+      console.log(
+        `results after makeRequestWithReencrypt: `,
+        results.map((result: [BytesLike, bigint]) => explainCapsulatedValue(result))
+      );
+      let value = sightInstance.decrypt(ORACLE_CONTRACT_ADDRESS, explainCapsulatedValue(result).value);
+      console.log(`Decrypted uint64 from reencrypt: ${value}`);
+    } else {
+      console.error("NOT MATCHED reqId");
+    }
   });
 }
 
