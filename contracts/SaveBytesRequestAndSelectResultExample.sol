@@ -46,13 +46,31 @@ contract SaveBytesAndSelectResultExample {
         return latestReqId;
     }
 
+    function makeRequestWithReencrypt(bytes32 publicKey, bytes memory signature) public returns (bytes32) {
+        // Initialize new FHE computation request of 2 steps.
+        Request memory r = RequestBuilder.newRequest(
+            msg.sender,
+            2,
+            address(this),
+            this.callback.selector, // specify the callback for Oracle
+            ""
+        );
+
+        op e_uint64 = r.getEuint64(results[1].asEuint64());
+        r.reencrypt(e_uint64, publicKey, signature);
+
+        // Send the request via Sight FHE Oracle
+        latestReqId = oracle.send(r);
+        return latestReqId;
+    }
+
     // only Oracle can call this
     function callback(bytes32 reqId, CapsulatedValue[] memory values) public onlyOracle {
         for (uint256 i = 0; i < values.length; i++) {
             results.push(values[i]);
         }
         // Decode value from Oracle callback
-        result = results[values.length - 1];
+        result = values[values.length - 1];
         emit OracleCallback(reqId);
     }
 
